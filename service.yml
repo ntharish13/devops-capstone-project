@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: capstone-beach
+  labels:
+    name: capstone-beach
+spec:
+  selector:
+    app: capstone-beach
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  type: LoadBalancer

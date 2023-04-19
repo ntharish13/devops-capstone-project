@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: capstone-harish-deploy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: capstone-beach
+  template:
+    metadata:
+      labels:
+        app: capstone-beach
+    spec:
+      containers:
+        - name: capstone-beach
+          image: ntharish13/udacity-capstone
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
