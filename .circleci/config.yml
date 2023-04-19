@@ -1,36 +1,11 @@
 version: 2.1
 
-commands:
-  install-awscli:
-    description: Install AWS CLI v2
-    steps:
-      - run:
-          name: Install AWS CLI v2
-          command: |
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-
-  install-eksctl:
-    description: Intsall eksctl
-    steps:
-      - run:
-          name: Install eksctl
-          command: |
-            curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-            sudo mv /tmp/eksctl /usr/local/bin
-
-  install-kubectl:
-    description: Intsall Kubectl v1.22
-    steps:
-      - run:
-          name: Install Kubectl v1.22
-          command: |
-            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-            sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-
+orbs:
+  aws-eks: circleci/aws-eks@1.1.0
+  kubernetes: circleci/kubernetes@0.12.0
+  aws-cli: circleci/aws-cli@2.0.3
+  
 jobs:
-
   lint:
     docker:
       - image: circleci/python:3.6.4
@@ -41,122 +16,150 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            python3 -m venv capstone
-            . capstone/bin/activate
+            python3 -m venv venv
+            . venv/bin/activate
             make install
             sudo wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.17.5/hadolint-Linux-x86_64 && \
             sudo chmod +x /bin/hadolint
       - run:
           name: run lint
           command: |
-            . capstone/bin/activate
+            . venv/bin/activate
             make lint
-
+    
   docker-build:
     docker:
-      - image: python:3.7.3-stretch
+      - image: circleci/buildpack-deps:stretch
     steps:
       - checkout
-      - restore_cache:
-          keys: [Lint-Dockerfile]
-
-      # run build
+      - setup_remote_docker
       - run:
-          name: install dependencies
+          name: build-image
           command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            make install
-      
-      - save_cache:
-          paths:
-            - ./venv
-          key: Lint-Dockerfile
-
-      # run lint
+            sudo chmod +x run_docker.sh
+            ./run_docker.sh
       - run:
-          name: run lint
+          name: upload-image
           command: |
-            . venv/bin/activate
-            make lint
+            sudo chmod +x upload_docker.sh
+            ./upload_docker.sh
 
-  upload-docker:
-    docker:
-      - image: circleci/golang:1.20
-        auth:
-            username: $DOCKERHUB_USERNAME
-            password: $DOCKERHUB_PASSWORD
+  create-eks-cluster:
+      docker:
+        - image: python:3.7-alpine3.11
+      steps:
+        - checkout
+        - run:
+            name: Install tar and gzip
+            command: |
+              apk add --update tar gzip nodejs npm curl  
+        - run:
+            name: install_awscli
+            command: |
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              ./aws/install 
+        - run:
+            name: install_aws_eks
+            command: |
+              mkdir -p src
+              curl --silent --location --retry 5 "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C src
+              chmod +x src/eksctl
+              SUDO=""
+              if [ $(id -u) -ne 0 ] && which sudo > /dev/null ; then
+                  SUDO="sudo"
+              fi
+                  $SUDO mv src/eksctl /usr/local/bin/
+                  rmdir src
+        - run:
+            name: install_kubectl
+            command: |
+              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+              kubectl version --client
+        - run:
+            name: AWS EKS cluster creation
+            command: |
+             eksctl create cluster --name harish-capstone --region us-east-1 --zones us-east-1a,us-east-1b,us-east-1c,us-east-1d 
+              
+        - run:
+            name: AWS EKS get cluster creation
+            command: |
+              eksctl utils describe-stacks --region us-east-1 --cluster=harish-capstone
+              eksctl get cluster --name=harish-capstone --region=us-east-1
+
+  deploy-eks-cluster:
+      executor: aws-eks/python3
+      steps:
+        - checkout
+        - kubernetes/install
+        - aws-eks/update-kubeconfig-with-authenticator:
+            cluster-name: harish-capstone
+            install-kubectl: true
+        - kubernetes/create-or-update-resource:
+            get-rollout-status: true
+            resource-file-path: deploy.yml
+            resource-name: deployment/harish-capstone-project
+        - kubernetes/create-or-update-resource:
+            resource-file-path: service.yml
+            resource-name: service/harish-capstone-project
+
+  check-eks-cluster:
+    executor: aws-eks/python3
+    steps:
+      - kubernetes/install
+      - aws-eks/update-kubeconfig-with-authenticator:
+          cluster-name: harish-capstone
+      - run:
+          name: Check Cluster status
+          command: |
+              echo '------------------Describe Deployment---------------------'
+              kubectl describe deployment capstone
+              echo '------------------Get Deployment-----------------------------'
+              kubectl get deployments
+              echo '------------------svc,nodes--------------------------------'
+              kubectl get svc
+              kubectl get nodes
+              echo '-------------------pods-------------------------------------'
+              kubectl get pods --all-namespaces
+              echo '-------------------config view------------------------------'
+              kubectl config view
+
+  eks-rolling-deployment:
+    executor: aws-eks/python3
     steps:
       - checkout
-      - setup_remote_docker:
-          version: 19.03.13
+      - kubernetes/install-kubectl
+      - aws-cli/setup
+      #- install-eksctl 
       - run:
-          name: Build docker image
-          command: |
-            docker build --tag=$DOCKER_IMAGE_NAME .
-            docker image ls
-      - run:
-          name: Upload Docker to Dockerhub
-          command: |
-            echo "Docker ID and Image: $DOCKER_IMAGE_NAME"
-            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
-            dockerpath=ntharish13/$DOCKER_IMAGE_NAME
-            docker tag $DOCKER_IMAGE_NAME $dockerpath
-            docker push $dockerpath
-
-  deploy-app-eks:
-    docker:
-      - image: ubuntu:18.04
-    working_directory: ~/repo
-    steps:
-      - checkout
-      - run:
-          name: Install Dependencies for Kube configuration
-          command: |
-            # install sudo package 
-            apt-get -y -qq update
-            apt-get -y install sudo
-            # extras for below installs
-            sudo apt-get -y install curl gnupg2 software-properties-common unzip less git dos2unix
-      - install-awscli
-      - install-kubectl
-      - install-eksctl
-
-      - run:
-          name: Install AWS EKS cluster
-          command: |
-            export TERM=xterm
-            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-            aws configure set default.region $AWS_DEFAULT_REGION
-            aws cloudformation list-exports > cluster.txt
-            cat cluster.txt
-            if [ $(grep -i "eksctl-capstone-pickcolor-eks" cluster.txt | wc -l) -ge 1 ]
-              then
-              echo "already EKS Cluster exists in environment"
-              else
-              echo "creating the EKS Cluster"
-              eksctl create cluster --name $ENVIRONMENT_NAME-eks --version 1.22 --region $AWS_DEFAULT_REGION --zones us-east-1a,us-east-1b,us-east-1c,us-east-1d --nodegroup-name $ENVIRONMENT_NAME-node --node-type t3.large --nodes-min 2 --nodes-max 4 --managed
-            fi
-      - run:
-          name: Update Kube cluster
-          command: |
-            export TERM=xterm
-            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-            aws configure set default.region $AWS_DEFAULT_REGION
-            aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name $ENVIRONMENT_NAME-eks
-            kubectl apply -f deploy.yaml -f service.yaml
+          name: Rolling Deployment      
+          command: |                      
+            #aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name capstone-cluster-${CIRCLE_WORKFLOW_ID:0:5}
+            kubectl rollout restart deployment capstone
+            echo "----Rolling Deployment History-----"            
+            kubectl rollout history deployment/capstone
+            echo "---------Replicas History-----------"  
+            kubectl get rs    
+            echo '---------- svc,Nodes ---------------'        
+            kubectl get svc
+            kubectl get nodes
+            echo '---------- Deployment --------------'
             kubectl get deployment
-            kubectl get nodes -o wide
-            kubectl get pods -o wide
-            kubectl get all
+            echo '---------- pod ---------------------'
+            kubectl get pod
+            echo "----load balancer after rolling deployment----"
+            #kubectl get svc -o jsonpath='{ $.items[*].status.loadBalancer}' | cut -b 26-68          
 workflows:
   default:
     jobs:
-      #- lint
+      - lint
       - docker-build
-      - upload-docker:
+          requires: [lint]
+      - create-eks-cluster:
+      - deploy-eks-cluster:
           requires: [docker-build]
-      - deploy-app-eks:
-         requires: [docker-build]
+      - check-eks-cluster:
+          requires: [deploy-eks-cluster]
+      - eks-rolling-deployment:
+          requires: [check-eks-cluster]
