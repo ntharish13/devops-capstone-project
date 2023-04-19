@@ -154,9 +154,9 @@ jobs:
 workflows:
   default:
     jobs:
-      - lint
-      #- docker-build
-      #- upload-docker:
-      #    requires: [docker-build]
-      #- deploy-app-eks:
-      #   requires: [docker-build]
+      #- lint
+      - docker-build
+      - upload-docker:
+          requires: [docker-build]
+      - deploy-app-eks:
+         requires: [docker-build]
