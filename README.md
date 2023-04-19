@@ -39,7 +39,20 @@ This project deploys a simple python app which will generate a simple html webpa
 
     ![](/Screenshots/EKSClusterInstall.PNG)
 
-    ![](/Screenshots/EKSCluster.png)
+    ![](/Screenshots/EKSCluster.PNG)
+
+*	Kubectl command output showing that the deployment is successful
+
+    ![](/Screenshots/successful-deployment-kubectl.PNG)
+
+*   Pods are running
+
+    ![](/Screenshots/pods-kubectl.PNG)
+
+*   Port forwarding
+
+    ![](/Screenshots/port.PNG)
+   
 
 *	EC2 Instances for EKS Node:
 
