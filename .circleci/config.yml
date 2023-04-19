@@ -102,8 +102,8 @@ jobs:
           command: |                          
             aws eks update-kubeconfig --name harish-capstone-${CIRCLE_WORKFLOW_ID:0:5}              
             export KUBECONFIG=~/.kube/config
-            kubectl apply -f services.yml
-            kubectl apply -f deployment.yml
+            kubectl apply -f service.yml
+            kubectl apply -f deploy.yml
             echo '------------------Describe Deployment---------------------'
             kubectl describe deployment capstone
             echo '------------------Get Deployment-----------------------------'
