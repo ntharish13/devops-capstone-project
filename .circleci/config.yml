@@ -30,10 +30,31 @@ commands:
             sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
 jobs:
+
+  lint:
+    docker:
+      - image: circleci/python:3.6.4
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 19.03.13
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv capstone
+            . capstone/bin/activate
+            make install
+            sudo wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.17.5/hadolint-Linux-x86_64 && \
+            sudo chmod +x /bin/hadolint
+      - run:
+          name: run lint
+          command: |
+            . capstone/bin/activate
+            make lint
+
   docker-build:
     docker:
       - image: python:3.7.3-stretch
-
     steps:
       - checkout
       - restore_cache:
@@ -133,8 +154,9 @@ jobs:
 workflows:
   default:
     jobs:
-      - docker-build
-      - upload-docker:
-          requires: [docker-build]
-      - deploy-app-svc-eks:
-          requires: [docker-build]
+      - lint
+      #- docker-build
+      #- upload-docker:
+      #    requires: [docker-build]
+      #- deploy-app-eks:
+      #   requires: [docker-build]
