@@ -1,2 +1,2 @@
 https://github.com/ntharish13/devops-capstone-project
-http://a4a536f8efad0484dbdd437dcc53ab2b-1041029532.us-east-1.elb.amazonaws.com/
+http://a6ec466964ebb46b7ad7e0614e6627b2-717408588.us-east-1.elb.amazonaws.com/

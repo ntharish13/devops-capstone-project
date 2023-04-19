@@ -50,21 +50,21 @@ This project deploys a simple python app which will generate a simple html webpa
 
 *   LoadBalancer for high availability
 
-    ![](/Screenshots/LoadBalancer.png)
+    ![](/Screenshots/LoadBalancer.PNG)
 
 *   Deploy application
 
-    ![](/Screenshots/DeployAppintoEKS.png)
+    ![](/Screenshots/DeployAppintoEKS.PNG)
 
 *   Webpage is accessible using the load balancer url
 
-    ![](/Screenshots/webpage.png)
+    ![](/Screenshots/webpage.PNG)
 
 ### Step5: PipeLine Testing using CircleCI:
 
 *   Successful Pipeline Builds
 
-    ![](/Screenshots/PipelineBuildSuccess.png)
+    ![](/Screenshots/PipelineBuildSuccess.PNG)
 
 
 
