@@ -5,6 +5,40 @@ orbs:
   kubernetes: circleci/kubernetes@0.12.0
   aws-cli: circleci/aws-cli@2.0.3
 
+commands: 
+  install-awscli:
+    description: Install awscli
+    steps:
+      - run: 
+          name: Install aws cli
+          command: |
+            apk add --update tar gzip  curl
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            ./aws/install
+            aws --version
+  install-eksctl:
+    description: Install eksctl tools
+    steps:
+      - run: 
+          name: Install eksctl
+          command: |
+            curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+            sudo mv /tmp/eksctl /usr/local/bin
+            eksctl version
+            aws --version
+            
+  install-kubectl:
+    description: Install kubectl tools
+    steps:
+      - run: 
+          name: Install kubectl
+          command: |           
+            curl -o kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.22.6/2022-03-09/bin/linux/amd64/kubectl
+            chmod +x ./kubectl
+            mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
+            kubectl version --client
+
 jobs:
   lint:
     docker:
@@ -83,13 +117,14 @@ jobs:
         - run:
             name: AWS EKS cluster creation
             command: |
-             eksctl create cluster --name $ENVIRONMENT_NAME --region $AWS_DEFAULT_REGION --zones us-east-1a,us-east-1b,us-east-1c,us-east-1d --node-type t3.large --nodes-min 2 --nodes-max 4 --managed
+             eksctl create cluster --name harish-capstone --region $AWS_DEFAULT_REGION --zones us-east-1a,us-east-1b,us-east-1c,us-east-1d 
+             ## --node-type t3.large --nodes-min 2 --nodes-max 4 --managed
               
         - run:
             name: AWS EKS get cluster creation
             command: |
-              eksctl utils describe-stacks --region $AWS_DEFAULT_REGION --cluster=$ENVIRONMENT_NAME
-              eksctl get cluster --name=$ENVIRONMENT_NAME --region=$AWS_DEFAULT_REGION
+              eksctl utils describe-stacks --region $AWS_DEFAULT_REGION --cluster=harish-capstone
+              eksctl get cluster --name=harish-capstone --region=$AWS_DEFAULT_REGION
 
   deploy-eks-cluster:
       executor: aws-eks/python3
@@ -102,10 +137,10 @@ jobs:
         - kubernetes/create-or-update-resource:
             get-rollout-status: true
             resource-file-path: deploy.yml
-            resource-name: deployment/harish-capstone-project
+            resource-name: deployment/harish-capstone
         - kubernetes/create-or-update-resource:
             resource-file-path: service.yml
-            resource-name: service/harish-capstone-project
+            resource-name: service/harish-capstone
 
   check-eks-cluster:
     executor: aws-eks/python3

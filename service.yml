@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: harish-capstone-project
+  name: harish-capstone
   labels:
-    name: capstone
+    name: harish-capstone
 spec:
   selector:
-    app: capstone
+    app: harish-capstone
   ports:
     - name: http
       protocol: TCP

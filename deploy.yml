@@ -8,11 +8,11 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      app: web
+      app: harish-capstone
   template:
     metadata:
       labels:
-        app: web
+        app: harish-capstone
     spec:
       containers:
       - name: harish-capstone
