@@ -80,13 +80,13 @@ jobs:
         - run:
             name: AWS EKS cluster creation
             command: |
-             eksctl create cluster --name harish-capstone --region us-east-1 --zones us-east-1a,us-east-1b,us-east-1c,us-east-1d 
+             eksctl create cluster --name $ENVIRONMENT_NAME --region $AWS_DEFAULT_REGION --zones us-east-1a,us-east-1b,us-east-1c,us-east-1d --node-type t3.large --nodes-min 2 --nodes-max 4 --managed
               
         - run:
             name: AWS EKS get cluster creation
             command: |
-              eksctl utils describe-stacks --region us-east-1 --cluster=harish-capstone
-              eksctl get cluster --name=harish-capstone --region=us-east-1
+              eksctl utils describe-stacks --region $AWS_DEFAULT_REGION --cluster=$ENVIRONMENT_NAME
+              eksctl get cluster --name=$ENVIRONMENT_NAME --region=$AWS_DEFAULT_REGION
 
   deploy-eks-cluster:
       executor: aws-eks/python3
@@ -135,28 +135,27 @@ jobs:
       - run:
           name: Rolling Deployment      
           command: |                      
-            #aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name capstone-cluster-${CIRCLE_WORKFLOW_ID:0:5}
             kubectl rollout restart deployment capstone
             echo "----Rolling Deployment History-----"            
             kubectl rollout history deployment/capstone
-            echo "---------Replicas History-----------"  
+            echo "---------Replica History-----------"  
             kubectl get rs    
-            echo '---------- svc,Nodes ---------------'        
+            echo '---------- SVC,Nodes ---------------'        
             kubectl get svc
             kubectl get nodes
             echo '---------- Deployment --------------'
             kubectl get deployment
-            echo '---------- pod ---------------------'
+            echo '---------- PODs ---------------------'
             kubectl get pod
-            echo "----load balancer after rolling deployment----"
-            #kubectl get svc -o jsonpath='{ $.items[*].status.loadBalancer}' | cut -b 26-68          
+            echo "----LB after rolling deployment------"
+       
 workflows:
   default:
     jobs:
       - lint
       - docker-build:
           requires: [lint]
-      - create-eks-cluster:
+      - create-eks-cluster
       - deploy-eks-cluster:
           requires: [docker-build]
       - check-eks-cluster:
