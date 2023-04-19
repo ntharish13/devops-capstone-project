@@ -82,7 +82,8 @@ jobs:
             dockerpath=ntharish13/$DOCKER_IMAGE_NAME
             docker tag $DOCKER_IMAGE_NAME $dockerpath
             docker push $dockerpath
-  deploy-app-svc-eks:
+            
+  deploy-app-eks:
     docker:
       - image: ubuntu:18.04
     working_directory: ~/repo
