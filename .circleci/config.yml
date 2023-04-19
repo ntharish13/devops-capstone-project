@@ -58,7 +58,7 @@ jobs:
       - run:
           name: run lint
           command: |
-            . devops/binn/activate
+            . devops/bin/activate
             make lint
     
   docker-build:
