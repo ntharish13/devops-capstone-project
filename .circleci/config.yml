@@ -53,8 +53,8 @@ jobs:
             python3 -m venv devops
             . devops/bin/activate
             make install
-            sudo wget -O /bin/hadolintt https://github.com/hadolint/hadolint/releases/download/v1.17.5/hadolint-Linux-x86_64 && \
-            sudo chmod +x /bin/hadolintt
+            sudo wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.17.5/hadolint-Linux-x86_64 && \
+            sudo chmod +x /bin/hadolint
       - run:
           name: run lint
           command: |
@@ -144,9 +144,9 @@ workflows:
   default:
     jobs:
       - lint
-      #- docker-build:
-       #   requires: [lint]
-      #- create-and deploy-eks-cluster:
-        #  requires: [docker-build]
+      - docker-build:
+          requires: [lint]
+      - create-and deploy-eks-cluster:
+          requires: [docker-build]
       #- eks-rolling-deployment:
       ##    requires: [check-eks-cluster]
