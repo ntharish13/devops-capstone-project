@@ -82,7 +82,7 @@ jobs:
             dockerpath=ntharish13/$DOCKER_IMAGE_NAME
             docker tag $DOCKER_IMAGE_NAME $dockerpath
             docker push $dockerpath
-            
+
   deploy-app-eks:
     docker:
       - image: ubuntu:18.04
@@ -125,7 +125,7 @@ jobs:
             aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
             aws configure set default.region $AWS_DEFAULT_REGION
             aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name $ENVIRONMENT_NAME-eks
-            kubectl apply -f cde-capstone-deploy.yaml -f cde-capstone-service.yaml
+            kubectl apply -f deploy.yaml -f service.yaml
             kubectl get deployment
             kubectl get nodes -o wide
             kubectl get pods -o wide
