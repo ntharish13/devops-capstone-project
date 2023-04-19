@@ -121,7 +121,7 @@ jobs:
     steps:
       - kubernetes/install
       - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: harish-capstone
+          cluster-name: harish-capstone-${CIRCLE_WORKFLOW_ID:0:5}
       - run:
           name: Check Cluster status
           command: |
@@ -147,9 +147,9 @@ jobs:
       - run:
           name: Rolling Deployment      
           command: |                      
-            kubectl rollout restart deployment capstone
+            kubectl rollout restart deployment harish-capstone
             echo "----Rolling Deployment History-----"            
-            kubectl rollout history deployment/capstone
+            kubectl rollout history deployment/harish-capstone
             echo "---------Replica History-----------"  
             kubectl get rs    
             echo '---------- SVC,Nodes ---------------'        
@@ -164,12 +164,12 @@ jobs:
 workflows:
   default:
     jobs:
-      - lint
-      - docker-build:
-          requires: [lint]
-      - create-and deploy-eks-cluster:
-          requires: [docker-build]
-      - check-eks-cluster:
-          requires: [create-and deploy-eks-cluster]
+      #- lint
+      #- docker-build:
+      ##    requires: [lint]
+      #- create-and deploy-eks-cluster:
+      #    requires: [docker-build]
+      - check-eks-cluster
+      #    requires: [create-and deploy-eks-cluster]
       #- eks-rolling-deployment:
       ##    requires: [check-eks-cluster]
