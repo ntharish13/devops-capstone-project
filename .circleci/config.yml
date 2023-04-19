@@ -94,7 +94,7 @@ jobs:
           name: Create AWS EKS Cluster
           command: |    
             aws sts get-caller-identity                   
-            eksctl create cluster --name harish-capstone-${CIRCLE_WORKFLOW_ID:0:5} --region ${AWS_DEFAULT_REGION} --nodegroup-name harish-capstone-node --node-type t3.micro --nodes-min2 --nodes-max 4 --managed     
+            eksctl create cluster --name harish-capstone-${CIRCLE_WORKFLOW_ID:0:5} --region ${AWS_DEFAULT_REGION} --nodegroup-name harish-capstone-node --node-type t3.micro --nodes-min 2 --nodes-max 4 --managed     
             eksctl utils describe-stacks --region=${AWS_DEFAULT_REGION} --cluster=harish-capstone-${CIRCLE_WORKFLOW_ID:0:5}
             eksctl get cluster --name=harish-capstone-${CIRCLE_WORKFLOW_ID:0:5} --region=${AWS_DEFAULT_REGION}
       - run:
