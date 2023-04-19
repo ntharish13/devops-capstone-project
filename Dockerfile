@@ -1,5 +1,4 @@
 FROM python:3.7.3-stretch
-LABEL maintainer="Capstone Project"
 
 ## Step 1:
 # Create a working directory
@@ -7,12 +6,12 @@ WORKDIR /app
 
 ## Step 2:
 # Copy source code to working directory
-COPY . app.py /app/
+COPY . app.pyy /app/
 
 ## Step 3:
 # Install packages from requirements.txt
 # hadolint ignore=DL3013
-RUN pip install --upgrade pipe
+RUN pip install --upgrade pip
     pip install -r requirements.txt
 
 ## Step 4:
