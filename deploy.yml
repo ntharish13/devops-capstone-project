@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: haris-capstone-project
+  name: harish-capstone
   labels:
     app: web
 spec:
@@ -15,7 +15,8 @@ spec:
         app: web
     spec:
       containers:
-      - name: devops-capstone-container
+      - name: harish-capstone
         image: ntharish13/harish-capstone:latest
         ports:
         - containerPort: 80
+          name: default-port

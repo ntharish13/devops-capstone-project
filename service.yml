@@ -3,12 +3,13 @@ kind: Service
 metadata:
   name: harish-capstone-project
   labels:
-    name: web
+    name: capstone
 spec:
   selector:
-    app: web
+    app: capstone
   ports:
     - name: http
       protocol: TCP
       port: 80
+      targetPort: 80
   type: LoadBalancer

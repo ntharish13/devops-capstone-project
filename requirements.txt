@@ -1,2 +1,4 @@
-Flask==2.0.2
-pylint==2.4.4
+Click
+Jinja2
+Flask
+pylint
