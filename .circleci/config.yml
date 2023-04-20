@@ -149,7 +149,7 @@ jobs:
 workflows:
   default:
     jobs:
-      #- lint
+      - lint
       #- docker-build:
       #    #requires: [lint]
       #- create-and deploy-eks-cluster:
